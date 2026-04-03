@@ -1,19 +1,27 @@
-import dayjs from 'dayjs/esm';
+import dayjs from 'dayjs';
 import { IUser } from 'app/entities/user/user.model';
-import { ICategory } from 'app/entities/category/category.model';
-import { Priority } from 'app/entities/enumerations/priority.model';
-import { TaskStatus } from 'app/entities/enumerations/task-status.model';
+import { TaskStatus } from 'app/shared/model/enumerations/task-status.model';
 
 export interface ITask {
-  id: number;
-  title?: string | null;
+  id?: number;
+  title?: string;
   description?: string | null;
-  priority?: keyof typeof Priority | null;
-  status?: keyof typeof TaskStatus | null;
+  status?: TaskStatus | null;
   dueDate?: dayjs.Dayjs | null;
-  createdAt?: dayjs.Dayjs | null;
-  assignee?: Pick<IUser, 'id' | 'login'> | null;
-  category?: Pick<ICategory, 'id'> | null;
+  assignedTo?: IUser | null;
 }
 
-export type NewTask = Omit<ITask, 'id'> & { id: null };
+export class Task implements ITask {
+  constructor(
+    public id?: number,
+    public title?: string,
+    public description?: string | null,
+    public status?: TaskStatus | null,
+    public dueDate?: dayjs.Dayjs | null,
+    public assignedTo?: IUser | null
+  ) {}
+}
+
+export function getTaskIdentifier(task: ITask): number | undefined {
+  return task.id;
+}
