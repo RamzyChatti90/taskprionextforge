@@ -1,0 +1,50 @@
+<div class="card jhi-card task-dashboard-card">
+  <h5 class="card-header">{{ 'taskDashboard.title' | translate }}</h5>
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="form-group mb-0">
+        <label for="statusFilter" class="mr-2">{{ 'taskDashboard.filterByStatus' | translate }}</label>
+        <select id="statusFilter" class="form-control d-inline-block w-auto" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+          <option value="ALL">{{ 'taskDashboard.all' | translate }}</option>
+          <option *ngFor="let status of taskStatuses" [value="status"]>{{ 'taskDashboard.status.' + status | translate }}</option>
+        </select>
+      </div>
+      <div>
+        <button type="button" class="btn btn-primary btn-sm" (click)="refreshTasks()" [disabled]="isLoading">
+          <fa-icon [icon]="'sync'" [spin]="isLoading"></fa-icon>
+          <span class="d-none d-md-inline">{{ 'taskDashboard.refresh' | translate }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="alert alert-warning" *ngIf="tasks?.length === 0 && !isLoading">
+      <span>{{ 'taskDashboard.noTasks' | translate }}</span>
+    </div>
+
+    <div class="table-responsive" id="entities" *ngIf="tasks && tasks.length > 0">
+      <table class="table table-striped" aria-describedby="tasks">
+        <thead>
+          <tr>
+            <th scope="col"><span>{{ 'taskDashboard.title' | translate }}</span></th>
+            <th scope="col"><span>{{ 'taskDashboard.status' | translate }}</span></th>
+            <th scope="col"><span>{{ 'taskDashboard.dueDate' | translate }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let task of tasks; trackBy: trackId">
+            <td>{{ task.title }}</td>
+            <td>
+              <span class="badge {{ getStatusBadgeClass(task.status) }}">{{ 'taskDashboard.status.' + task.status | translate }}</span>
+            </td>
+            <td>{{ task.dueDate | date:'shortDate' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="isLoading" class="text-center">
+      <fa-icon [icon]="'sync-alt'" [spin]="true" size="2x"></fa-icon>
+      <p>{{ 'taskDashboard.loading' | translate }}</p>
+    </div>
+  </div>
+</div>
