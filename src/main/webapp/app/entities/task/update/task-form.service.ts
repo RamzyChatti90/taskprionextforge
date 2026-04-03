@@ -1,3 +1,4 @@
+// === src/main/webapp/app/entities/task/update/task-form.service.ts ===
 import { Injectable } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 
@@ -25,7 +26,9 @@ type FormValueOf<T extends ITask | NewTask> = Omit<T, 'createdAt'> & {
 
 type TaskFormRawValue = FormValueOf<ITask>;
 
-type NewTaskFormRawValue = FormValueOf<NewTask>;
+// Corrected: Ensure NewTaskFormRawValue explicitly includes 'id: null'
+// This addresses the TS2344 error by making NewTaskFormRawValue compatible with the '{ id: unknown }' constraint.
+type NewTaskFormRawValue = FormValueOf<NewTask> & { id: null };
 
 type TaskFormDefaults = Pick<NewTask, 'id' | 'createdAt'>;
 

@@ -1,0 +1,66 @@
+<div class="row justify-content-center">
+  <div class="col-md-10">
+    <div class="card jh-card">
+      <div class="card-header">
+        <h2 id="user-dashboard-heading" jhiTranslate="taskprionextforgeApp.userDashboard.home.title">Mon Dashboard des Tâches</h2>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="filter-controls">
+            <button
+              type="button"
+              class="btn btn-outline-info btn-sm mr-1"
+              (click)="filterByStatus(null)"
+              [class.active]="!currentFilterStatus"
+              jhiTranslate="taskprionextforgeApp.userDashboard.filters.all"
+            >
+              Toutes
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm mr-1"
+              (click)="filterByStatus(TaskStatus.TODO)"
+              [class.active]="currentFilterStatus === TaskStatus.TODO"
+              jhiTranslate="taskprionextforgeApp.userDashboard.filters.todo"
+            >
+              À faire
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-warning btn-sm mr-1"
+              (click)="filterByStatus(TaskStatus.IN_PROGRESS)"
+              [class.active]="currentFilterStatus === TaskStatus.IN_PROGRESS"
+              jhiTranslate="taskprionextforgeApp.userDashboard.filters.inProgress"
+            >
+              En cours
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-success btn-sm"
+              (click)="filterByStatus(TaskStatus.DONE)"
+              [class.active]="currentFilterStatus === TaskStatus.DONE"
+              jhiTranslate="taskprionextforgeApp.userDashboard.filters.done"
+            >
+              Terminé
+            </button>
+          </div>
+          <button type="button" class="btn btn-primary" (click)="loadAll()">
+            <fa-icon icon="sync"></fa-icon> <span jhiTranslate="taskprionextforgeApp.userDashboard.home.refreshListLabel">Rafraîchir</span>
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-warning" *ngIf="tasks?.length === 0 && !isLoading">
+          <span jhiTranslate="taskprionextforgeApp.userDashboard.home.notFound">Aucune tâche trouvée pour le moment.</span>
+        </div>
+
+        <div class="table-responsive" *ngIf="tasks && tasks.length > 0">
+          <table class="table table-striped" aria-describedby="user-dashboard-heading">
+            <thead>
+              <tr>
+                <th scope="col"><span jhiTranslate="taskprionextforgeApp.task.title">Titre</span></th>
+                <th scope="col"><span jhiTranslate="taskprionextforgeApp.task.status">Statut</span></th>
+                <th scope="col"><span jhiTranslate="taskprionextforgeApp.task.dueDate">Date d'échéance</span></th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let task of tasks">

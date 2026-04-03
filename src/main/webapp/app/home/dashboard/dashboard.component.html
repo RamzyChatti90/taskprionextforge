@@ -1,0 +1,88 @@
+<div class="task-dashboard-container">
+  <h2 class="dashboard-title">Mon Dashboard de Tâches</h2>
+
+  <div class="dashboard-controls d-flex justify-content-between align-items-center mb-3">
+    <div class="filter-buttons">
+      <button
+        type="button"
+        class="btn btn-outline-primary btn-sm me-2"
+        [class.active]="currentFilter === 'ALL'"
+        (click)="applyFilter('ALL')"
+      >
+        Toutes
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-info btn-sm me-2"
+        [class.active]="currentFilter === TaskStatus.TODO"
+        (click)="applyFilter(TaskStatus.TODO)"
+      >
+        À faire
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-warning btn-sm me-2"
+        [class.active]="currentFilter === TaskStatus.IN_PROGRESS"
+        (click)="applyFilter(TaskStatus.IN_PROGRESS)"
+      >
+        En cours
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-success btn-sm me-2"
+        [class.active]="currentFilter === TaskStatus.DONE"
+        (click)="applyFilter(TaskStatus.DONE)"
+      >
+        Terminé
+      </button>
+    </div>
+    <button type="button" class="btn btn-secondary btn-sm" (click)="refreshTasks()">
+      <fa-icon icon="sync" [spin]="loading"></fa-icon>
+      <span class="d-none d-md-inline ms-1">Rafraîchir</span>
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center my-4">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && tasks && tasks.length > 0; else noTasks" class="task-list-section">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover mt-3">
+        <thead>
+          <tr>
+            <th scope="col">Titre</th>
+            <th scope="col">Statut</th>
+            <th scope="col">Date d'échéance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let task of tasks">
+            <td>{{ task.title }}</td>
+            <td>
+              <span
+                class="badge"
+                [ngClass]="{
+                  'bg-info': task.status === TaskStatus.TODO,
+                  'bg-warning': task.status === TaskStatus.IN_PROGRESS,
+                  'bg-success': task.status === TaskStatus.DONE
+                }"
+              >
+                {{ task.status | taskStatusDisplay }}
+              </span>
+            </td>
+            <td>{{ task.dueDate | date : 'shortDate' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <ng-template #noTasks>
+    <div *ngIf="!loading" class="alert alert-info mt-3" role="alert">
+      Aucune tâche trouvée pour le filtre actuel.
+    </div>
+  </ng-template>
+</div>
