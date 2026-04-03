@@ -1,22 +1,26 @@
 package com.taskprionextforge.web.rest;
 
+import com.taskprionextforge.domain.enumeration.TaskStatus;
 import com.taskprionextforge.repository.TaskRepository;
 import com.taskprionextforge.service.TaskService;
 import com.taskprionextforge.service.dto.TaskDTO;
 import com.taskprionextforge.web.rest.errors.BadRequestAlertException;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
+import com.taskprionextforge.security.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -26,12 +30,13 @@ import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing {@link com.taskprionextforge.domain.Task}.
+ * Extends with a new endpoint for user task dashboard.
  */
 @RestController
-@RequestMapping("/api/tasks")
+@RequestMapping("/api")
 public class TaskResource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TaskResource.class);
+    private final Logger log = LoggerFactory.getLogger(TaskResource.class);
 
     private static final String ENTITY_NAME = "task";
 
@@ -54,16 +59,17 @@ public class TaskResource {
      * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new taskDTO, or with status {@code 400 (Bad Request)} if the task has already an ID.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
-    @PostMapping("")
+    @PostMapping("/tasks")
     public ResponseEntity<TaskDTO> createTask(@Valid @RequestBody TaskDTO taskDTO) throws URISyntaxException {
-        LOG.debug("REST request to save Task : {}", taskDTO);
+        log.debug("REST request to save Task : {}", taskDTO);
         if (taskDTO.getId() != null) {
             throw new BadRequestAlertException("A new task cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        taskDTO = taskService.save(taskDTO);
-        return ResponseEntity.created(new URI("/api/tasks/" + taskDTO.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, taskDTO.getId().toString()))
-            .body(taskDTO);
+        TaskDTO result = taskService.save(taskDTO);
+        return ResponseEntity
+            .created(new URI("/api/tasks/" + result.getId()))
+            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
+            .body(result);
     }
 
     /**
@@ -71,17 +77,17 @@ public class TaskResource {
      *
      * @param id the id of the taskDTO to save.
      * @param taskDTO the taskDTO to update.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated taskDTO,
-     * or with status {@code 400 (Bad Request)} if the taskDTO is not valid,
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated taskDTO, 
+     * or with status {@code 400 (Bad Request)} if the taskDTO is not valid, 
      * or with status {@code 500 (Internal Server Error)} if the taskDTO couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
-    @PutMapping("/{id}")
+    @PutMapping("/tasks/{id}")
     public ResponseEntity<TaskDTO> updateTask(
         @PathVariable(value = "id", required = false) final Long id,
         @Valid @RequestBody TaskDTO taskDTO
     ) throws URISyntaxException {
-        LOG.debug("REST request to update Task : {}, {}", id, taskDTO);
+        log.debug("REST request to update Task : {}, {}", id, taskDTO);
         if (taskDTO.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
@@ -93,10 +99,11 @@ public class TaskResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        taskDTO = taskService.update(taskDTO);
-        return ResponseEntity.ok()
+        TaskDTO result = taskService.save(taskDTO);
+        return ResponseEntity
+            .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, taskDTO.getId().toString()))
-            .body(taskDTO);
+            .body(result);
     }
 
     /**
@@ -104,18 +111,18 @@ public class TaskResource {
      *
      * @param id the id of the taskDTO to save.
      * @param taskDTO the taskDTO to update.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated taskDTO,
-     * or with status {@code 400 (Bad Request)} if the taskDTO is not valid,
-     * or with status {@code 404 (Not Found)} if the taskDTO is not found,
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated taskDTO, 
+     * or with status {@code 400 (Bad Request)} if the taskDTO is not valid, 
+     * or with status {@code 404 (Not Found)} if no task was found with the id, 
      * or with status {@code 500 (Internal Server Error)} if the taskDTO couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
-    @PatchMapping(value = "/{id}", consumes = { "application/json", "application/merge-patch+json" })
+    @PatchMapping(value = "/tasks/{id}", consumes = { "application/json", "application/merge-patch+json" })
     public ResponseEntity<TaskDTO> partialUpdateTask(
         @PathVariable(value = "id", required = false) final Long id,
         @NotNull @RequestBody TaskDTO taskDTO
     ) throws URISyntaxException {
-        LOG.debug("REST request to partial update Task partially : {}, {}", id, taskDTO);
+        log.debug("REST request to partial update Task partially : {}, {}", id, taskDTO);
         if (taskDTO.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
@@ -139,21 +146,12 @@ public class TaskResource {
      * {@code GET  /tasks} : get all the tasks.
      *
      * @param pageable the pagination information.
-     * @param eagerload flag to eager load entities from relationships (This is applicable for many-to-many).
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of tasks in body.
      */
-    @GetMapping("")
-    public ResponseEntity<List<TaskDTO>> getAllTasks(
-        @org.springdoc.core.annotations.ParameterObject Pageable pageable,
-        @RequestParam(name = "eagerload", required = false, defaultValue = "true") boolean eagerload
-    ) {
-        LOG.debug("REST request to get a page of Tasks");
-        Page<TaskDTO> page;
-        if (eagerload) {
-            page = taskService.findAllWithEagerRelationships(pageable);
-        } else {
-            page = taskService.findAll(pageable);
-        }
+    @GetMapping("/tasks")
+    public ResponseEntity<List<TaskDTO>> getAllTasks(@org.springdoc.api.annotations.ParameterObject Pageable pageable) {
+        log.debug("REST request to get a page of Tasks");
+        Page<TaskDTO> page = taskService.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
@@ -164,9 +162,9 @@ public class TaskResource {
      * @param id the id of the taskDTO to retrieve.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the taskDTO, or with status {@code 404 (Not Found)}.
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<TaskDTO> getTask(@PathVariable("id") Long id) {
-        LOG.debug("REST request to get Task : {}", id);
+    @GetMapping("/tasks/{id}")
+    public ResponseEntity<TaskDTO> getTask(@PathVariable Long id) {
+        log.debug("REST request to get Task : {}", id);
         Optional<TaskDTO> taskDTO = taskService.findOne(id);
         return ResponseUtil.wrapOrNotFound(taskDTO);
     }
@@ -177,12 +175,33 @@ public class TaskResource {
      * @param id the id of the taskDTO to delete.
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
      */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable("id") Long id) {
-        LOG.debug("REST request to delete Task : {}", id);
+    @DeleteMapping("/tasks/{id}")
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
+        log.debug("REST request to delete Task : {}", id);
         taskService.delete(id);
-        return ResponseEntity.noContent()
+        return ResponseEntity
+            .noContent()
             .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))
             .build();
+    }
+
+    /**
+     * {@code GET  /tasks/user-tasks} : get all tasks assigned to the currently logged-in user.
+     *
+     * @param status an optional query parameter to filter tasks by status.
+     * @param pageable the pagination information.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of tasks in body.
+     */
+    @GetMapping("/tasks/user-tasks")
+    public ResponseEntity<List<TaskDTO>> getUserTasks(
+        @RequestParam(required = false) TaskStatus status,
+        @org.springdoc.api.annotations.ParameterObject Pageable pageable
+    ) {
+        log.debug("REST request to get a page of Tasks for current user with status {}", status);
+        String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new BadRequestAlertException("Current user login not found", ENTITY_NAME, "usernotfound"));
+
+        Page<TaskDTO> page = taskService.findUserTasks(userLogin, Optional.ofNullable(status), pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 }
