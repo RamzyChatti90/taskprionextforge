@@ -1,0 +1,20 @@
+{
+  "generator-jhipster": {
+    "applicationType": "monolith",
+    "authenticationType": "jwt",
+    "baseName": "taskprionextforge",
+    "buildTool": "maven",
+    "clientFramework": "angular",
+    "databaseType": "sql",
+    "devDatabaseType": "h2Disk",
+    "entities": ["Task", "Category", "Comment"],
+    "jhipsterVersion": "8.11.0",
+    "jwtSecretKey": "ODg5MTg3MzM0MGEzNTYyOTYxYWE4YWFkNGNiMTJlODc5YmZhMzVhZGYwNmUzODQ3ZDhiYmRiOTA3OGU4MDQ2MTg3OGJkOTczNjVkNmEwZGU3MmRlMzAxY2RlYTdhN2ZmNzU2MjE2OGUxOGIxYWJjNTVmZjMxZmI0N2RiMzgyMDM=",
+    "languages": ["en", "fr"],
+    "lastLiquibaseTimestamp": 1775220140000,
+    "nativeLanguage": "en",
+    "packageName": "com.taskprionextforge",
+    "prodDatabaseType": "postgresql",
+    "serverPort": "9000"
+  }
+}
